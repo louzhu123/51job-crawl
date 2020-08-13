@@ -1,4 +1,4 @@
-module go-status-2020
+module github.com/louzhu123/gcrawl
 
 go 1.14
 
