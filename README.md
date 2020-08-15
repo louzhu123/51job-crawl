@@ -15,7 +15,7 @@ package main
 
 import (
 	"fmt"
-    "github.com/tidwall/gjson"
+	"github.com/tidwall/gjson"
 	"github.com/louzhu123/gcrawl"
 )
 
