@@ -17,8 +17,15 @@ func New51job() *_51job {
 	return &_51job{}
 }
 
-func (c *_51job) Where(query string, value interface{}) *_51job {
-	c.whereConditions = append(c.whereConditions, map[string]interface{}{"query": query, "value": value})
+func (c *_51job) Where(params ...interface{}) *_51job {
+	switch params[0].(type) {
+	case map[string]interface{}:
+		for query,value := range params[0].(map[string]interface{}) {
+			c.whereConditions = append(c.whereConditions, map[string]interface{}{"query": query, "value": value})
+		}
+	case string:
+		c.whereConditions = append(c.whereConditions, map[string]interface{}{"query": params[0], "value": params[1]})
+	}
 	return c
 }
 
@@ -144,7 +151,6 @@ func (c *_51job) processUrl() {
 	}
 	url := "https://search.51job.com/list/" + parameters["city"] + ",000000,0000,00,9," + parameters["salary"] + "," + parameters["search"] + ",2," + parameters["page"] + ".html?lang=c&postchannel=0000&workyear=" + parameters["workyear"] + "&cotype=" + parameters["cotype"] + "&degreefrom=" + parameters["degreefrom"]+ "&jobterm=99&companysize=" + parameters["companysize"] + "&ord_field=0&dibiaoid=0&line=&welfare="
 	c.url = url
-	println(url)
 }
 
 func (c *_51job) Get() string {
