@@ -16,12 +16,6 @@ func Test_51job_Where(t *testing.T) {
 	}
 	c.Where(conditions)
 	assert.Len(t, c.whereConditions, 3)
-
-	c.Where("city","广州")
-	assert.Len(t, c.whereConditions, 4)
-
-	c.Where("search","golang")
-	assert.Len(t, c.whereConditions, 5)
 }
 
 func Test_51job_Get(t *testing.T) {
