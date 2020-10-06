@@ -24,6 +24,7 @@ func Test_51job_Get(t *testing.T) {
 		"page":   2,
 		"salary": "0-10000",
 		"city":   "成都",
+		"position" : "后端开发",
 	}
 	json := c.Where(conditions).Get()
 	result := gjson.Get(json, "engine_search_result")

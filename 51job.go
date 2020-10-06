@@ -39,6 +39,7 @@ func (c *_51job) processUrl() {
 		"cotype" : "99",
 		"degreefrom" : "99",
 		"companysize" : "99",
+		"position" : "0000",
 	}
 	for _, condition := range c.whereConditions {
 		switch condition["query"] {
@@ -143,13 +144,41 @@ func (c *_51job) processUrl() {
 				}
 				log.Fatal()
 			}
+		case "position":
+			degreefromList := []map[string]string{
+				{"displayName": "后端开发", "value": "0100"},
+				{"displayName": "移动开发", "value": "7700"},
+				{"displayName": "前端开发", "value": "7200"},
+				{"displayName": "人工智能", "value": "7300"},
+				{"displayName": "游戏", "value": "7800"},
+				{"displayName": "设计", "value": "7400"},
+				{"displayName": "测试", "value": "2700"},
+				{"displayName": "运维/技术支持", "value": "7900"},
+				{"displayName": "数据", "value": "7500"},
+				{"displayName": "产品", "value": "6600"},
+				{"displayName": "运营", "value": "8000"},
+				{"displayName": "技术管理", "value": "2600"},
+				{"displayName": "电子商务", "value": "6100"},
+				{"displayName": "半导体/芯片", "value": "6700"},
+				{"displayName": "电子/电器/仪表仪器", "value": "2900"},
+				{"displayName": "通信技术开发及应用", "value": "2800"},
+			}
+			if value,flag := InList(degreefromList,condition["value"].(string)); flag == true {
+				parameters["position"] = value
+			}else {
+				println("position仅包含以下值")
+				for _,item := range degreefromList {
+					print(item["displayName"] + " ")
+				}
+				log.Fatal()
+			}
 		case "salary":
 			parameters["salary"] = condition["value"].(string)
 		case "search":
 			parameters["search"] = condition["value"].(string)
 		}
 	}
-	url := "https://search.51job.com/list/" + parameters["city"] + ",000000,0000,00,9," + parameters["salary"] + "," + parameters["search"] + ",2," + parameters["page"] + ".html?lang=c&postchannel=0000&workyear=" + parameters["workyear"] + "&cotype=" + parameters["cotype"] + "&degreefrom=" + parameters["degreefrom"]+ "&jobterm=99&companysize=" + parameters["companysize"] + "&ord_field=0&dibiaoid=0&line=&welfare="
+	url := "https://search.51job.com/list/" + parameters["city"] + ",000000," + parameters["position"] + ",00,9," + parameters["salary"] + "," + parameters["search"] + ",2," + parameters["page"] + ".html?lang=c&postchannel=0000&workyear=" + parameters["workyear"] + "&cotype=" + parameters["cotype"] + "&degreefrom=" + parameters["degreefrom"]+ "&jobterm=99&companysize=" + parameters["companysize"] + "&ord_field=0&dibiaoid=0&line=&welfare="
 	c.url = url
 }
 
