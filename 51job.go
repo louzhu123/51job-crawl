@@ -1,35 +1,39 @@
 package gcrawl
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
-	"github.com/axgle/mahonia"
+
+	"github.com/tidwall/gjson"
+	"github.com/PuerkitoBio/goquery"
 )
 
 type _51job struct {
 	url             string
 	whereConditions []map[string]interface{}
+	withMoreInfo    bool
 }
 
 func New51job() *_51job {
-	return &_51job{}
+	return &_51job{"",[]map[string]interface{}{},false}
 }
 
-func (c *_51job) Where(params ...interface{}) *_51job {
+func (this *_51job) Where(params ...interface{}) *_51job {
 	switch params[0].(type) {
 	case map[string]interface{}:
 		for query,value := range params[0].(map[string]interface{}) {
-			c.whereConditions = append(c.whereConditions, map[string]interface{}{"query": query, "value": value})
+			this.whereConditions = append(this.whereConditions, map[string]interface{}{"query": query, "value": value})
 		}
 	case string:
-		c.whereConditions = append(c.whereConditions, map[string]interface{}{"query": params[0], "value": params[1]})
+		this.whereConditions = append(this.whereConditions, map[string]interface{}{"query": params[0], "value": params[1]})
 	}
-	return c
+	return this
 }
 
-func (c *_51job) processUrl() {
+func (this *_51job) processUrl() {
 	parameters := map[string]string{
 		"city" : "000000",
 		"search" : "+",
@@ -41,7 +45,7 @@ func (c *_51job) processUrl() {
 		"companysize" : "99",
 		"position" : "0000",
 	}
-	for _, condition := range c.whereConditions {
+	for _, condition := range this.whereConditions {
 		switch condition["query"] {
 		case "page":
 			page,_ := condition["value"].(int)
@@ -179,16 +183,71 @@ func (c *_51job) processUrl() {
 		}
 	}
 	url := "https://search.51job.com/list/" + parameters["city"] + ",000000," + parameters["position"] + ",00,9," + parameters["salary"] + "," + parameters["search"] + ",2," + parameters["page"] + ".html?lang=c&postchannel=0000&workyear=" + parameters["workyear"] + "&cotype=" + parameters["cotype"] + "&degreefrom=" + parameters["degreefrom"]+ "&jobterm=99&companysize=" + parameters["companysize"] + "&ord_field=0&dibiaoid=0&line=&welfare="
-	c.url = url
+	this.url = url
 }
 
-func (c *_51job) Get() string {
-	c.processUrl()
+func (this *_51job) WithMoreInfo() *_51job  {
+	this.withMoreInfo = true
+	return this
+}
+
+func (this *_51job) GetMoreInfo(url string) map[string]string  {
+	var (
+		result  = map[string]string{}
+	)
+
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+	job_msg := doc.Find(".job_msg")
+	positionDescribe := job_msg.Find("p").Text()
+	keyword := job_msg.Find(".mt10").Find("a").Text()
+
+	fmt.Println(Gbk2Utf8(positionDescribe))
+	fmt.Println(Gbk2Utf8(keyword))
+
+	result["positionDescribe"] = Gbk2Utf8(positionDescribe)
+	result["keyword"] = Gbk2Utf8(keyword)
+
+	return result
+}
+
+func (this *_51job) Get() string {
+	this.processUrl()
 	client := &http.Client{}
-	req,_ :=  http.NewRequest("GET",c.url,nil)
+	req,_ :=  http.NewRequest("GET",this.url,nil)
 	req.Header.Add("Accept","application/json, text/javascript, */*; q=0.01")
 	resp,_ := client.Do(req)
 	body, _ := ioutil.ReadAll(resp.Body)
-	enc := mahonia.NewDecoder("gbk")
-	return enc.ConvertString(string(body))
+	json := Gbk2Utf8(string(body))
+
+	if this.withMoreInfo == false {
+		return json
+	}
+
+	items := gjson.Get(json, "engine_search_result").Array()
+	result := []map[string]interface{}{}
+	for _,item := range items {
+		m, _ := gjson.Parse(item.String()).Value().(map[string]interface{})
+
+		href := gjson.Get(item.String(),"job_href").String()
+		moreInfo := this.GetMoreInfo(href)
+		m["positionDescribe"] = moreInfo["positionDescribe"]
+		m["keyword"] = moreInfo["keyword"]
+
+		result = append(result,m)
+	}
+
+	return "1"
 }

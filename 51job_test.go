@@ -26,7 +26,7 @@ func Test_51job_Get(t *testing.T) {
 		"city":   "成都",
 		"position" : "后端开发",
 	}
-	json := c.Where(conditions).Get()
+	json := c.Where(conditions).WithMoreInfo().Get()
 	result := gjson.Get(json, "engine_search_result")
 	assert.NotNil(t,result)
 }
